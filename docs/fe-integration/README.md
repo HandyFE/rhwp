@@ -30,6 +30,7 @@ rhwp-FE는 원작 rhwp(v0.8.7, `1a76570e8`)를 바탕으로 **핸디 전자결�
 | [stage3_reliability_and_server.md](stage3_reliability_and_server.md) | 3단계: 제품 적용 신뢰성 평가, 저장 결함 2 발견, BMS 서버 운영 방식 비교와 결정 |
 | [poc_rhwp_editor.md](poc_rhwp_editor.md) | **rhwp editor** POC: 기안기용 에디터(웹한글 대체). 구조, 빌드·켜기, 확인 결과 |
 | [poc_rhwp_converter.md](poc_rhwp_converter.md) | **rhwp converter** POC 1단계: 서버용 문서편집(BMS). `rhwp worker` + `rhwp.war` 로 `서명.2` 글자 서명, 장애 시험 결과 |
+| [plan_rhwp_converter_stage2.md](plan_rhwp_converter_stage2.md) | **rhwp converter** 2·3단계 계획: BMS `DocConverter` 계약 대비 공백, 작업 항목 W1~W9 와 견적, 착수 전 요청 자료 |
 | [scripts/](scripts/README.md) | 검증에 쓴 스크립트 |
 
 ## 현재 결론 (2026-10-28)
@@ -61,7 +62,7 @@ rhwp-FE는 원작 rhwp(v0.8.7, `1a76570e8`)를 바탕으로 **핸디 전자결�
 1. 착수 전 확인: BMS 처리량, 서버 OS·배포 방식, 실패 시 대체 경로, 운영 서식 목록
 2. 저장 결함 1·2 수정
 3. 버전 고정 + 운영 서식 전체 회귀 게이트(`scripts/formsweep.mjs` 정식화, 한글 열기 확인 포함)
-4. Rust 상주 HTTP 서비스(4~6인일, 범위·견적 재보고 후 착수)
+4. rhwp converter 2·3단계([계획](plan_rhwp_converter_stage2.md), 16~23인일, 착수 시 범위·견적 재보고)
 5. 기안기 대체는 2단계 견적을 바탕으로 범위 조정 후 결정
 
 ## 증적
