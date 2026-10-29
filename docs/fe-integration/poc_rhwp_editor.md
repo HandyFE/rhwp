@@ -63,7 +63,14 @@ yarn run deploy-fe dev
 | 브리지 동작 (로컬 시험 페이지) | 확인 | studio iframe → 플러그인 로드 → `Open`(통합서식 1page) → `GetFieldList`·`PutFieldText`·`GetFieldText`·`PageCount` → `EditMode` 읽기·쓰기. 제목·본문 값이 화면에 그려짐 |
 | 미지원 API 통과 | 확인 | `SetToolBar`, `ScrollPosInfo.Item()`: 경고만 남고 예외 없음 |
 | 기안기 빌드 | 확인 | webpack 빌드 성공, eslint·prettier 통과, 새 순환 의존 없음 |
-| 기안기 실제 화면 (BMS 개발 서버) | **미확인** | 개발 서버 배포 후 확인 필요 |
+| 기안기 실제 화면 (BMS 개발 서버) | 로딩 완료 (2026-10-29) | 기안(DRAFT) 로딩까지 확인. 도중에 멈춘 4곳은 FE 브리지에서 임시 처리. 로딩 이후 편집·저장·상신은 미확인 |
+
+POC에서 드러난 문제·개선 목록은 FeWebClient_rhwp `doc/plan/rhwp 에디터.md`에 기록한다(`poc/rhwp-editor` 브랜치).
+주요 원인은 호환 층(COM 규격)과 웹한글 JS API의 차이다.
+- 콜백 미지원
+- `CreateSet` 속성/메서드 차이
+- 모르는 액션에 `null` 반환
+- realm에 따라 바이트 판별 실패
 
 ## 범위 밖 (알려진 공백)
 
