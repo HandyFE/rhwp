@@ -9,6 +9,9 @@ rhwp-FE는 원작 rhwp(v0.8.7, `1a76570e8`)를 바탕으로 **핸디 전자결�
 - 저장소 루트의 `CLAUDE.md`·`AGENTS.md`·`CONTRIBUTING.md`·`mydocs/`는 원작 프로젝트의 지침이다.
   회사 작업 방식과 충돌하면 회사 방식을 우선하되, 판단이 필요하면 담당자에게 확인한다.
 - 큰 작업은 착수 전에 범위·견적을 보고하고 확인받는다.
+- **worktree를 쓰지 않는다.** `C:\Handyground\Workspace\git\rhwp-FE`의 `main` 브랜치에서 직접 작업한다(2026-10-29).
+  Claude Code 세션은 worktree 없이 시작하고, 파일 경로는 원래 체크아웃 기준으로 안내한다.
+- 커밋은 담당자가 지시할 때만 한다. `cargo fmt --all`은 저장소 전체 줄바꿈을 바꾸므로 쓰지 않는다(필요하면 파일 단위 `rustfmt`).
 - 회사 문서는 원작 문서(`mydocs/`)와 섞지 않고 이 `docs/` 아래에 둔다.
 
 ## 문서
@@ -19,6 +22,7 @@ rhwp-FE는 원작 rhwp(v0.8.7, `1a76570e8`)를 바탕으로 **핸디 전자결�
 | [stage2_api_scope.md](stage2_api_scope.md) | 2단계: 기안기(웹한글 `hwpCtrl`) 대체에 필요한 API 우선순위와 견적(61~91인일) |
 | [stage3_reliability_and_server.md](stage3_reliability_and_server.md) | 3단계: 제품 적용 신뢰성 평가, 저장 결함 2 발견, BMS 서버 운영 방식 비교와 결정 |
 | [poc_rhwp_editor.md](poc_rhwp_editor.md) | 기안기에 rhwp 에디터를 붙이는 POC: 구조, 빌드·켜기, 확인 결과 |
+| [poc_bms_sign.md](poc_bms_sign.md) | BMS HWP 수정툴 POC 1단계: `rhwp worker` + `rhwp.war` 로 `서명.2` 글자 서명, 장애 시험 결과 |
 | [scripts/](scripts/README.md) | 검증에 쓴 스크립트 |
 
 ## 현재 결론 (2026-10-28)
@@ -42,6 +46,7 @@ rhwp-FE는 원작 rhwp(v0.8.7, `1a76570e8`)를 바탕으로 **핸디 전자결�
 |---|---|---|
 | 2026-10-28 | 원작 저장소에 PR을 내지 않고 이 포크에서 개발한다(당분간) | 핸디 기안기 전용 추가 개발 저장소 |
 | 2026-10-28 | BMS 연동은 **Rust 상주 HTTP 서비스**로 한다. 구현은 나중에 착수 | [3단계 §3·§4](stage3_reliability_and_server.md#4-결정-기록) |
+| 2026-10-29 | (변경) BMS 연동은 **별도 WAR 컨텍스트 `rhwp.war` + 워커 프로세스 풀**로 한다. 1단계 `서명.2` 글자 서명 착수 | [3단계 §4.1](stage3_reliability_and_server.md#41-결정-변경-2026-10-29), [integrations/rhwp-was](../../integrations/rhwp-was/README.md) |
 | 2026-10-28 | 결함 수정·기능 개선은 기안기·BMS 적용 작업 때 진행한다 | 현 단계는 신뢰성 판단이 목적 |
 
 ## 다음 단계 (보류 중)

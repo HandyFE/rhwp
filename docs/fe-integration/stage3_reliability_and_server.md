@@ -132,6 +132,18 @@ tonghap_1page 원본  [secd][cold][tbl][%clk 시작]1[clk 끝][문단끝]
 | 채택하지 않은 안 | A(요청마다 CLI): 운영 관리 측면에서 B보다 불리하다. C(Node+WASM): 서버에 런타임이 추가된다. D(`batch`/`mcp-serve`): 그림 삽입과 격리가 없다. E(JNI/FFM): 크래시가 BMS JVM으로 전파된다 |
 | 견적 | 4~6인일 (§3.2 B). 저장 결함 2종 수정과 회귀 게이트는 별도다 |
 
+### 4.1 결정 변경 (2026-10-29)
+
+| 항목 | 내용 |
+|---|---|
+| 결정 | B(Rust 상주 HTTP 서비스) 대신 **별도 WAR 컨텍스트(`rhwp.war`) + 내부 rhwp 워커 프로세스 풀**로 한다. BMS 와 같은 WAS 에 `/rhwp` 로 올리거나 전용 WAS 에 올린다 |
+| 결정자 | 사용자 |
+| 이유 | 장애를 반드시 피해야 한다. 워커 단위 격리와 시간 초과 시 강제 종료가 되고, 별도 서비스를 운영하지 않아도 되며, rhwp 만 따로 배포할 수 있다. WAS 하나에 BMS 컨텍스트가 여러 개면 풀을 공유한다 |
+| 통신 | BMS → `rhwp.war`: HTTP multipart. `rhwp.war` → 워커: stdin/stdout 한 줄 JSON, 문서는 **임시 파일 경로**(같은 서버라 base64 불필요) |
+| 전용 WAS 주의 | 여러 BMS 가 함께 쓰는 공용 장애 지점이 되므로 2대 이상 + BMS 쪽 URL 장애 조치가 필요하다 |
+| 구현 | rhwp-FE `integrations/rhwp-was/`(WAR, Java 8) + `rhwp worker`(Rust). 1단계는 `서명.2` 글자 서명(`insertTextEx`+`appendTextEx`) |
+| 대체 안 | A(BMS 내부 풀): BMS 마다 WAS 가 따로면 동등. C(JNI/FFM): 크래시 전파. HTTP 서비스: 다른 시스템이 같이 써야 할 때 재검토 |
+
 착수 전에 확인할 것:
 - §3.4의 1~4. 처리량, 서버 OS와 배포 방식, 대체 경로, 운영 서식 목록. 결정 시점에는 아직 받지 않았다.
 - 착수할 때 API 범위와 견적을 다시 보고하고 확인받는다.

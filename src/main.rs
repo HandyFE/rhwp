@@ -142,6 +142,7 @@ fn main() {
         Some("export-agent-manifest") => exit_with(cmd_export_agent_manifest(&args[2..])),
         Some("mcp-serve") => exit_with(mcp_serve::run(&args[2..])),
         Some("batch") => exit_with(cli::batch::run(&args[2..])),
+        Some("worker") => exit_with(cli::commands::worker::run(&args[2..])),
         Some("scan") => exit_with(cli::queries::scan::run(&args[2..])),
         Some("threat-scan") => {
             exit_with(cli::queries::security_inspection::threat_scan(&args[2..]))

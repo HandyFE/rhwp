@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1">
+  <display-name>rhwp</display-name>
+
+  <!--
+    설정은 시스템 속성(-Drhwp.*) > 환경 변수(RHWP_*) > 아래 context-param 순으로 읽는다.
+    rhwp.binary 만 필수다.
+  -->
+  <context-param>
+    <param-name>rhwp.binary</param-name>
+    <param-value></param-value>
+  </context-param>
+  <context-param>
+    <param-name>rhwp.workers</param-name>
+    <param-value>2</param-value>
+  </context-param>
+  <context-param>
+    <param-name>rhwp.timeoutMs</param-name>
+    <param-value>20000</param-value>
+  </context-param>
+  <context-param>
+    <param-name>rhwp.queueTimeoutMs</param-name>
+    <param-value>5000</param-value>
+  </context-param>
+  <context-param>
+    <!-- 비우면 서블릿 컨테이너 임시 폴더 -->
+    <param-name>rhwp.workDir</param-name>
+    <param-value></param-value>
+  </context-param>
+  <context-param>
+    <!-- 설정하면 요청 헤더 X-Rhwp-Token 이 일치해야 한다 -->
+    <param-name>rhwp.token</param-name>
+    <param-value></param-value>
+  </context-param>
+
+  <listener>
+    <listener-class>com.handysoft.rhwp.was.AppListener</listener-class>
+  </listener>
+</web-app>
