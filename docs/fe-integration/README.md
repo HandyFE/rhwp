@@ -25,6 +25,7 @@ rhwp-FE는 원작 rhwp(v0.8.7, `1a76570e8`)를 바탕으로 **핸디 전자결�
 
 | 문서 | 내용 |
 |---|---|
+| [poc_interim_report.md](poc_interim_report.md) | **두 POC(rhwp editor·rhwp converter) 중간 결과 보고** — rhwp 설명, 결과, 제품 포함 판정, 다음 단계(2026-10-29). 최종 보고·발표 자료의 바탕 |
 | [stage1_verification.md](stage1_verification.md) | 1단계: FE 서식을 rhwp로 열기·필드 채우기·셀 그림 삽입·저장 검증, 한글 확인 결과와 저장 결함 1 원인 |
 | [stage2_api_scope.md](stage2_api_scope.md) | 2단계: 기안기(웹한글 `hwpCtrl`) 대체에 필요한 API 우선순위와 견적(61~91인일) |
 | [stage3_reliability_and_server.md](stage3_reliability_and_server.md) | 3단계: 제품 적용 신뢰성 평가, 저장 결함 2 발견, BMS 서버 운영 방식 비교와 결정 |
