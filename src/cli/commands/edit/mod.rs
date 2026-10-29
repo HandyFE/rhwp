@@ -13,7 +13,7 @@ mod fields;
 mod formatting;
 mod header_footer_content;
 mod header_footer_properties;
-mod media;
+pub(crate) mod media;
 mod note_content;
 mod notes;
 mod page;

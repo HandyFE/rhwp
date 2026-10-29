@@ -1090,6 +1090,32 @@ fn serialize_para_text(para: &Paragraph) -> ParaTextResult {
         prev_end += 8;
     }
 
+    // 본문 갭에서 FIELD_BEGIN(과 `inner_slot_count` 만큼의 안쪽 슬롯)을 이미 방출한 trailing
+    // 필드의 FIELD_END — 텍스트 끝 직후, 남은 컨트롤(뒤 표·그림)보다 **먼저** 닫는다.
+    // 종전에는 이 키(`< ctrl_idx`)를 아래 루프가 만나지 못해 맨 끝 orphan 경로로 빠졌고,
+    // `[앞 컨트롤][%clk]값[뒤 표]` 문단을 편집·저장하면 END 가 뒤 표 뒤에 붙어 한글에서 표가
+    // 누름틀 안으로 들어갔다(rhwp-FE 저장 결함 1). 키 >= ctrl_idx 인 필드(#5162: 개체를 감싼
+    // 0길이 누름틀)는 아래 루프가 자기 슬롯 뒤에서 닫는다.
+    let mut already_opened: Vec<usize> = trailing_end_after_ctrl
+        .keys()
+        .copied()
+        .filter(|&k| k < ctrl_idx)
+        .collect();
+    already_opened.sort_unstable();
+    for key in already_opened {
+        if let Some(residues) = trailing_residues.get(&key) {
+            for &residue in residues {
+                push_guide_residue(&mut code_units, &mut residue_shifts, residue, prev_end);
+            }
+        }
+        if let Some(end_markers) = trailing_end_after_ctrl.remove(&key) {
+            for marker in end_markers {
+                push_field_end_ctrl(&mut code_units, marker);
+                prev_end += 8;
+            }
+        }
+    }
+
     while ctrl_idx < para.controls.len() {
         if emits_ctrl_header(&para.controls[ctrl_idx]) {
             let (ctrl_code, ctrl_id) = control_char_code_and_id(&para.controls[ctrl_idx]);
@@ -2472,6 +2498,82 @@ mod tests {
 
     /// [#1795] FIELD_END 전용 갭(8 cu)을 다음 컨트롤(FIELD_BEGIN)이 선점하면
     /// 이후 char_offsets 가 시프트되어 lineseg text_start 매핑이 어긋난다.
+    /// PARA_TEXT 바이트를 토큰으로 되읽는다: 확장 컨트롤(8 cu)은 (code, ctrl_id), 글자는 (cu, 0).
+    fn para_text_tokens(bytes: &[u8]) -> Vec<(u16, u32)> {
+        let cu: Vec<u16> = bytes
+            .chunks(2)
+            .map(|b| u16::from_le_bytes([b[0], b[1]]))
+            .collect();
+        let mut out = Vec::new();
+        let mut i = 0;
+        while i < cu.len() {
+            let c = cu[i];
+            let extended = matches!(c, 0x01..=0x04 | 0x0B | 0x0C | 0x0E..=0x17);
+            if extended {
+                out.push((c, cu[i + 1] as u32 | ((cu[i + 2] as u32) << 16)));
+                i += 8;
+            } else if c == 0x09 {
+                out.push((c, 0));
+                i += 8;
+            } else {
+                out.push((c, 0));
+                i += 1;
+            }
+        }
+        out
+    }
+
+    /// rhwp-FE 저장 결함 1: `[앞 컨트롤들][%clk]값[뒤 표]` 문단에서 텍스트 끝까지 이어지는
+    /// 누름틀의 FIELD_END 는 뒤 표보다 **먼저** 닫혀야 한다. 종전에는 END 가 맨 끝(뒤 표 뒤)에
+    /// 붙어 한글에서 결재 표가 누름틀 안으로 들어갔다.
+    #[test]
+    fn trailing_field_end_closes_before_later_controls() {
+        let para = Paragraph {
+            // 4 ctrl(32) + '값'(1) + END(8) + tbl(8) + 0x0D(1)
+            char_count: 50,
+            text: "값".to_string(),
+            char_offsets: vec![32],
+            char_shapes: vec![CharShapeRef {
+                start_pos: 0,
+                char_shape_id: 0,
+            }],
+            controls: vec![
+                Control::SectionDef(Box::default()),
+                Control::ColumnDef(Default::default()),
+                Control::Table(Box::default()),
+                Control::Field(Field {
+                    field_type: FieldType::ClickHere,
+                    ctrl_id: tags::FIELD_CLICKHERE,
+                    ..Default::default()
+                }),
+                Control::Table(Box::default()),
+            ],
+            field_ranges: vec![FieldRange {
+                start_char_idx: 0,
+                end_char_idx: 1,
+                control_idx: 3,
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+        let tokens = para_text_tokens(&test_serialize_para_text(&para));
+        let cc = |k: usize| control_char_code_and_id(&para.controls[k]);
+        assert_eq!(
+            tokens,
+            vec![
+                cc(0),
+                cc(1),
+                cc(2),
+                cc(3),
+                ('값' as u16, 0),
+                (0x0004, tags::FIELD_CLICKHERE),
+                cc(4),
+                (0x000D, 0),
+            ],
+            "FIELD_END 는 뒤 표보다 먼저 닫혀야 한다"
+        );
+    }
+
     /// 필드 2개 문단에서 스트림 배치와 offsets 가 라운드트립 보존되는지 검증.
     #[test]
     fn test_field_end_gap_not_stolen_by_next_control() {

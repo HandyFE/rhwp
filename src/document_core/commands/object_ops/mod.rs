@@ -4,6 +4,7 @@
 //! 로직/외부 인터페이스 무변경 (impl DocumentCore 분산, 메서드 경로 동일).
 
 /// [#4100] 차트 숫자 데이터 읽기·쓰기.
+mod cell_controls;
 mod chart;
 mod common;
 mod connector;

@@ -2765,12 +2765,23 @@ pub(crate) fn rebuild_char_offsets(para: &mut Paragraph) {
 
     // 원본 char_offsets에서 첫 문자 이전 컨트롤 수 추정
     // (원본 gap / 8 = 컨트롤 수)
-    let ctrls_before_text = if !para.char_offsets.is_empty() {
+    let estimated = if !para.char_offsets.is_empty() {
         para.char_offsets[0] as usize / 8
     } else {
         para.controls.len()
-    }
-    .min(para.controls.len());
+    };
+    // 첫 글자에서 시작하는 필드의 BEGIN 앞 컨트롤(secd·cold·앞 표 등)은 구조상 모두 텍스트 앞이다.
+    // 값 교체 중 `insert_text_at_caret` 가 표 앞 삽입으로 판정해 `char_offsets[0]` 이 0 으로
+    // 무너져도 이 하한은 지킨다 — 아니면 값이 secd 뒤·표 앞에 저장되어 다시 열면 필드가 빈다
+    // (rhwp-FE 저장 결함 2: `[secd][cold][tbl][%clk]` 문단에 본문 채우기).
+    let required = para
+        .field_ranges
+        .iter()
+        .filter(|fr| fr.start_char_idx == 0)
+        .map(|fr| fr.control_idx)
+        .max()
+        .unwrap_or(0);
+    let ctrls_before_text = estimated.max(required).min(para.controls.len());
 
     // FIELD_BEGIN: 이미 char_offsets의 첫 갭에 포함된 선행 컨트롤은 보존하고,
     // 새로 삽입된 시작 위치 필드는 첫 문자 앞에도 갭을 추가해야 한다.
@@ -3213,6 +3224,35 @@ mod tests {
 
         // A=8(+1) B=9(+1) C=10(+1) → gap 8 for FIELD_BEGIN → X=19(+1) Y=20
         assert_eq!(para.char_offsets, vec![8, 9, 10, 19, 20]);
+    }
+
+    /// rhwp-FE 저장 결함 2: `[secd][cold][tbl][%clk]값` 문단에서 값 교체 뒤 `char_offsets[0]` 이
+    /// 0 으로 무너져도(표 앞 삽입 판정) BEGIN 앞 컨트롤 3개는 텍스트 앞에 있어야 한다.
+    /// 종전에는 `ctrls_before_text=0` 으로 잡혀 값이 secd 뒤·표 앞에 저장됐다.
+    #[test]
+    fn rebuild_keeps_leading_controls_before_field_at_start() {
+        let mut para = Paragraph {
+            text: "값".into(),
+            controls: vec![
+                Control::SectionDef(Box::default()),
+                Control::ColumnDef(Default::default()),
+                Control::Table(Box::default()),
+                make_field_control(300),
+            ],
+            field_ranges: vec![FieldRange {
+                start_char_idx: 0,
+                end_char_idx: 1,
+                control_idx: 3,
+                ..Default::default()
+            }],
+            char_offsets: vec![0],
+            ..Default::default()
+        };
+
+        rebuild_char_offsets(&mut para);
+
+        assert_eq!(para.char_offsets, vec![32], "secd·cold·tbl·BEGIN 4 슬롯 뒤에 값");
+        assert_eq!(para.char_count, 42, "32 + 값 1 + END 8 + 0x0D 1");
     }
 
     #[test]

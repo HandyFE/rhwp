@@ -112,3 +112,4 @@ W4 를 2단계로 당긴다.
 | 날짜 | 내용 |
 |---|---|
 | 2026-10-29 | 계획 작성. BMS `DocConverter` 계약·액션 16종 대비 공백 정리, W1~W9 와 2·3단계 제안 |
+| 2026-10-29 | W1~W8 구현 착수·완료(검증 보류). 결과는 [rhwp_converter_stage2.md](rhwp_converter_stage2.md) |

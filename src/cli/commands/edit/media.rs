@@ -25,7 +25,7 @@ const HWPUNIT_PER_PX: u32 = 75;
 ///
 /// 확장자는 거짓말할 수 있으므로 매직 바이트로 형식을 다시 판정한다. 알아보지 못하면
 /// `None` — 호출부가 인자 오류(exit 2)로 끊는다.
-fn insert_image_dimensions(bytes: &[u8]) -> Option<(u32, u32)> {
+pub(crate) fn insert_image_dimensions(bytes: &[u8]) -> Option<(u32, u32)> {
     use image::ImageFormat;
 
     let format = image::guess_format(bytes).ok()?;

@@ -13,5 +13,6 @@
 | `paratext.py` | 최소 CFB 리더. 첫 최상위 문단의 PARA_HEADER·PARA_TEXT 토큰 출력 | `python -I paratext.py <파일.hwp>` |
 | `paratext_lib.py` | `paratext.py`의 함수 모음(`ctrlorder.py`가 사용) | |
 | `ctrlorder.py` | 두 HWP의 모든 PARA_TEXT 컨트롤 순서 비교(FIELD_END 정규화) | `python -I ctrlorder.py <원본.hwp> <저장본.hwp> [--ignore-gso]` |
+| `converter_gate.mjs` | rhwp converter 회귀 게이트: 서식 폴더 × BMS 액션 시나리오를 `rhwp worker` 로 실행 → verify + `ctrlorder.py` → TSV/JSON | `node converter_gate.mjs <rhwp> <입력 폴더> <출력 폴더> [--image sign.png] [--scenarios f.json]` |
 
 외부 Python 패키지는 필요 없다.

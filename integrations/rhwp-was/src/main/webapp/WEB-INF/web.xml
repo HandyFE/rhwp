@@ -36,6 +36,16 @@
     <param-value></param-value>
   </context-param>
 
+  <context-param>
+    <!-- true 면 그림 액션의 http(s) URL inputValue 를 WAR 가 내려받는다. 기본 false (BMS 가 multipart 첨부) -->
+    <param-name>rhwp.allowImageUrl</param-name>
+    <param-value>false</param-value>
+  </context-param>
+  <context-param>
+    <param-name>rhwp.maxImageBytes</param-name>
+    <param-value>5242880</param-value>
+  </context-param>
+
   <listener>
     <listener-class>com.handysoft.rhwp.was.AppListener</listener-class>
   </listener>

@@ -33,6 +33,8 @@ public final class RhwpWorker {
     private final BlockingQueue<String> lines = new LinkedBlockingQueue<>();
     private final AtomicBoolean broken = new AtomicBoolean(false);
     private long requestCount;
+    private String version = "?";
+    private int apiVersion = -1;
 
     public RhwpWorker(int index, File binary, File workDir) throws IOException {
         this.index = index;
@@ -90,6 +92,14 @@ public final class RhwpWorker {
         return requestCount;
     }
 
+    public String version() {
+        return version;
+    }
+
+    public int apiVersion() {
+        return apiVersion;
+    }
+
     /**
      * 요청 한 줄을 보내고 응답 한 줄을 기다린다.
      *
@@ -135,6 +145,8 @@ public final class RhwpWorker {
     public boolean ping(long timeoutMs) {
         try {
             JSONObject r = call(new JSONObject().put("ping", true), timeoutMs);
+            version = r.optString("version", "?");
+            apiVersion = r.optInt("apiVersion", 1);
             return r.optBoolean("pong", false);
         } catch (WorkerException e) {
             LOG.warning(e.getMessage());

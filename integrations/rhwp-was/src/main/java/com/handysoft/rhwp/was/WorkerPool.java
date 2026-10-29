@@ -30,6 +30,11 @@ public final class WorkerPool {
     private final AtomicInteger nextIndex = new AtomicInteger();
     private final AtomicInteger restarts = new AtomicInteger();
     private final AtomicInteger failures = new AtomicInteger();
+    private final AtomicInteger waiting = new AtomicInteger();
+    private final AtomicInteger busyRejects = new AtomicInteger();
+    private volatile String lastError;
+    private volatile long lastErrorAt;
+    private volatile String workerVersion = "?";
     private volatile boolean closed;
 
     public WorkerPool(RhwpConfig config) throws IOException {
@@ -46,6 +51,12 @@ public final class WorkerPool {
             w.kill();
             throw new IOException("rhwp worker 기동 확인(ping) 실패: " + config.binary);
         }
+        if (w.apiVersion() != RhwpConfig.REQUIRED_WORKER_API) {
+            w.kill();
+            throw new IOException("rhwp worker 프로토콜 버전 불일치: 워커 " + w.apiVersion() + ", WAR 요구 "
+                    + RhwpConfig.REQUIRED_WORKER_API + " (rhwp " + w.version() + ", " + config.binary + ")");
+        }
+        workerVersion = w.version();
         synchronized (all) {
             all.add(w);
         }
@@ -64,6 +75,7 @@ public final class WorkerPool {
             // 다시 띄우지 못하면 풀이 하나 줄어든다. 다음 요청에서 또 시도한다.
             LOG.log(Level.SEVERE, "워커 재기동 실패", e);
             failures.incrementAndGet();
+            noteError("재기동 실패: " + e.getMessage());
         }
     }
 
@@ -72,7 +84,13 @@ public final class WorkerPool {
         if (closed) {
             throw new PoolBusyException("풀이 닫혔습니다");
         }
-        RhwpWorker w = acquireLive();
+        waiting.incrementAndGet();
+        RhwpWorker w;
+        try {
+            w = acquireLive();
+        } finally {
+            waiting.decrementAndGet();
+        }
         if (w == null) {
             // 워커가 전부 죽어 비어 있으면 하나 띄워 본다
             int live;
@@ -83,9 +101,11 @@ public final class WorkerPool {
                 try {
                     w = spawn();
                 } catch (IOException e) {
+                    noteError("워커가 없고 재기동도 실패: " + e.getMessage());
                     throw new PoolBusyException("워커가 없고 재기동도 실패: " + e.getMessage());
                 }
             } else {
+                busyRejects.incrementAndGet();
                 throw new PoolBusyException("워커가 모두 사용 중입니다 (" + config.queueTimeoutMs + "ms 대기)");
             }
         }
@@ -99,9 +119,15 @@ public final class WorkerPool {
             return response;
         } catch (RhwpWorker.WorkerException e) {
             failures.incrementAndGet();
+            noteError(e.getMessage());
             discard(w);
             throw e;
         }
+    }
+
+    private void noteError(String message) {
+        lastError = message;
+        lastErrorAt = System.currentTimeMillis();
     }
 
     /**
@@ -146,7 +172,12 @@ public final class WorkerPool {
                 .put("idle", idle.size())
                 .put("restarts", restarts.get())
                 .put("failures", failures.get())
-                .put("requests", requests);
+                .put("waiting", waiting.get())
+                .put("busyRejects", busyRejects.get())
+                .put("requests", requests)
+                .put("workerVersion", workerVersion)
+                .put("lastError", lastError == null ? JSONObject.NULL : lastError)
+                .put("lastErrorAt", lastErrorAt == 0 ? JSONObject.NULL : new java.util.Date(lastErrorAt).toString());
     }
 
     public void close() {

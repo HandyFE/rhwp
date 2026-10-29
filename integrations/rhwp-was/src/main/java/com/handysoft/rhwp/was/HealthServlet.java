@@ -19,7 +19,7 @@ public final class HealthServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         WorkerPool pool = (WorkerPool) getServletContext().getAttribute(AppListener.POOL);
         RhwpConfig config = (RhwpConfig) getServletContext().getAttribute(AppListener.CONFIG);
-        JSONObject body = new JSONObject().put("service", "rhwp").put("apiVersion", 1);
+        JSONObject body = new JSONObject().put("service", "rhwp").put("apiVersion", RhwpConfig.HTTP_API_VERSION).put("workerApiVersion", RhwpConfig.REQUIRED_WORKER_API);
         if (pool == null) {
             body.put("ok", false).put("error", String.valueOf(getServletContext().getAttribute(AppListener.INIT_ERROR)));
             resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
@@ -28,7 +28,10 @@ public final class HealthServlet extends HttpServlet {
             body.put("ok", stats.getInt("alive") > 0)
                     .put("workers", stats)
                     .put("binary", config.binary.getAbsolutePath())
-                    .put("timeoutMs", config.timeoutMs);
+                    .put("timeoutMs", config.timeoutMs)
+                    .put("queueTimeoutMs", config.queueTimeoutMs)
+                    .put("allowImageUrl", config.allowImageUrl)
+                    .put("endpoints", new org.json.JSONArray().put("/convert").put("/fields").put("/field-values").put("/health"));
             resp.setStatus(stats.getInt("alive") > 0 ? HttpServletResponse.SC_OK : HttpServletResponse.SC_SERVICE_UNAVAILABLE);
         }
         resp.setContentType("application/json;charset=UTF-8");
