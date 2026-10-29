@@ -1,4 +1,6 @@
-# BMS HWP 수정툴 POC 1단계 — `서명.2` 글자 서명
+# rhwp converter POC 1단계 — `서명.2` 글자 서명
+
+(rhwp converter: rhwp 를 이용한 서버용 문서편집 개발. 이전 명칭 "BMS HWP 수정툴")
 
 - 일자: 2026-10-29
 - 목적: BMS 서버에서 UI 없이 결재 본문 HWP 의 서명 셀에 글자 서명을 넣는다. 한컴 문서변환서버·hwplib 를

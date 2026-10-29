@@ -14,6 +14,13 @@ rhwp-FE는 원작 rhwp(v0.8.7, `1a76570e8`)를 바탕으로 **핸디 전자결�
 - 커밋은 담당자가 지시할 때만 한다. `cargo fmt --all`은 저장소 전체 줄바꿈을 바꾸므로 쓰지 않는다(필요하면 파일 단위 `rustfmt`).
 - 회사 문서는 원작 문서(`mydocs/`)와 섞지 않고 이 `docs/` 아래에 둔다.
 
+## 작업 명칭
+
+| 명칭 | 내용 | 코드 |
+|---|---|---|
+| **rhwp editor** | rhwp 를 이용한 기안기(FeWebClient)용 에디터 개발 | FeWebClient_rhwp `src/editor/rhwp/`, rhwp-FE `rhwp-studio`·`npm/hwpctrl-ocx` |
+| **rhwp converter** | rhwp 를 이용한 서버(BMS)용 문서편집 개발 | rhwp-FE `integrations/rhwp-was/`, `src/cli/commands/worker.rs`·`cell_text_actions.rs` |
+
 ## 문서
 
 | 문서 | 내용 |
@@ -21,8 +28,8 @@ rhwp-FE는 원작 rhwp(v0.8.7, `1a76570e8`)를 바탕으로 **핸디 전자결�
 | [stage1_verification.md](stage1_verification.md) | 1단계: FE 서식을 rhwp로 열기·필드 채우기·셀 그림 삽입·저장 검증, 한글 확인 결과와 저장 결함 1 원인 |
 | [stage2_api_scope.md](stage2_api_scope.md) | 2단계: 기안기(웹한글 `hwpCtrl`) 대체에 필요한 API 우선순위와 견적(61~91인일) |
 | [stage3_reliability_and_server.md](stage3_reliability_and_server.md) | 3단계: 제품 적용 신뢰성 평가, 저장 결함 2 발견, BMS 서버 운영 방식 비교와 결정 |
-| [poc_rhwp_editor.md](poc_rhwp_editor.md) | 기안기에 rhwp 에디터를 붙이는 POC: 구조, 빌드·켜기, 확인 결과 |
-| [poc_bms_sign.md](poc_bms_sign.md) | BMS HWP 수정툴 POC 1단계: `rhwp worker` + `rhwp.war` 로 `서명.2` 글자 서명, 장애 시험 결과 |
+| [poc_rhwp_editor.md](poc_rhwp_editor.md) | **rhwp editor** POC: 기안기용 에디터(웹한글 대체). 구조, 빌드·켜기, 확인 결과 |
+| [poc_rhwp_converter.md](poc_rhwp_converter.md) | **rhwp converter** POC 1단계: 서버용 문서편집(BMS). `rhwp worker` + `rhwp.war` 로 `서명.2` 글자 서명, 장애 시험 결과 |
 | [scripts/](scripts/README.md) | 검증에 쓴 스크립트 |
 
 ## 현재 결론 (2026-10-28)
@@ -46,7 +53,7 @@ rhwp-FE는 원작 rhwp(v0.8.7, `1a76570e8`)를 바탕으로 **핸디 전자결�
 |---|---|---|
 | 2026-10-28 | 원작 저장소에 PR을 내지 않고 이 포크에서 개발한다(당분간) | 핸디 기안기 전용 추가 개발 저장소 |
 | 2026-10-28 | BMS 연동은 **Rust 상주 HTTP 서비스**로 한다. 구현은 나중에 착수 | [3단계 §3·§4](stage3_reliability_and_server.md#4-결정-기록) |
-| 2026-10-29 | (변경) BMS 연동은 **별도 WAR 컨텍스트 `rhwp.war` + 워커 프로세스 풀**로 한다. 1단계 `서명.2` 글자 서명 착수 | [3단계 §4.1](stage3_reliability_and_server.md#41-결정-변경-2026-10-29), [integrations/rhwp-was](../../integrations/rhwp-was/README.md) |
+| 2026-10-29 | (변경) rhwp converter 는 **별도 WAR 컨텍스트 `rhwp.war` + 워커 프로세스 풀**로 한다. 1단계 `서명.2` 글자 서명 착수 | [3단계 §4.1](stage3_reliability_and_server.md#41-결정-변경-2026-10-29), [integrations/rhwp-was](../../integrations/rhwp-was/README.md) |
 | 2026-10-28 | 결함 수정·기능 개선은 기안기·BMS 적용 작업 때 진행한다 | 현 단계는 신뢰성 판단이 목적 |
 
 ## 다음 단계 (보류 중)

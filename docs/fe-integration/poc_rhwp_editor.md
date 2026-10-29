@@ -1,4 +1,6 @@
-# 기안기 rhwp 에디터 POC
+# rhwp editor POC — 기안기용 에디터
+
+(rhwp editor: rhwp 를 이용한 기안기용 에디터 개발)
 
 - 일자: 2026-10-29
 - 목적: 기안기(FeWebClient)에 rhwp 에디터가 붙은 모습 확인. 알려진 결함 수정·기능 보강은 범위 밖이다.

@@ -1,4 +1,6 @@
-# rhwp-was — BMS 용 HWP 수정 컨텍스트 (POC)
+# rhwp-was — rhwp converter 의 WAR 컨텍스트 (POC)
+
+**rhwp converter**(rhwp 를 이용한 서버용 문서편집)의 WAS 쪽 구성 요소다.
 
 BMS 서버에서 결재 본문 HWP 를 수정(서명 글자 넣기 등)하기 위한 WAR 다. BMS 와 같은 WAS 에
 별도 컨텍스트(`/rhwp`)로 올리거나, 전용 WAS 에 올린다. 안에서 `rhwp worker` 프로세스 풀을
