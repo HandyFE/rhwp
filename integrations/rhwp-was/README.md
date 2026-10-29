@@ -93,7 +93,7 @@ BMS `getFieldList` 는 hwplib 구현체와 같이 `option=2` 를 쓴다.
 
 ### `GET /health`
 
-풀 상태 JSON(`workers.alive/idle/waiting/restarts/failures/busyRejects/requests/workerVersion/lastError`, `apiVersion`, `workerApiVersion`, `endpoints`). 워커가 하나도 없으면 503.
+풀 상태 JSON(`workers.configured/pooled/alive(살아 있는 프로세스 수)/idle/waiting/restarts/failures/busyRejects/requests(누적)/workerVersion/lastError`, `apiVersion`, `workerApiVersion`, `endpoints`). 워커가 하나도 없으면 503.
 
 ## 워커 프로토콜 (`rhwp worker`, apiVersion 2)
 
@@ -146,6 +146,7 @@ BMS `getFieldList` 는 hwplib 구현체와 같이 `option=2` 를 쓴다.
 
 Tomcat 8.5/9 에 `target/rhwp.war` 를 올리고 JVM 옵션으로 설정을 준다. 기존 Tomcat 을 건드리지 않으려면
 `CATALINA_BASE` 를 따로 만든다(`conf/` 복사 후 포트 변경, `webapps/rhwp.war`).
+개발 PC 에서 쓴 인스턴스 구성(복사 절차·`setenv.bat`·포트 8480)은 `local-tomcat/README.md` 에 있다.
 
 ```bash
 java -cp "$CATALINA_HOME/bin/bootstrap.jar;$CATALINA_HOME/bin/tomcat-juli.jar" \
@@ -163,6 +164,8 @@ curl -s -o out.hwp -D - http://localhost:8780/rhwp/convert \
 curl -s http://localhost:8780/rhwp/fields -F file=@tonghap_1page.hwp -F option=2
 curl -s http://localhost:8780/rhwp/field-values -F file=@tonghap_1page.hwp -F 'fields=["miskey","서명.2"]'
 ```
+
+Windows Git Bash 에서는 한글이 든 `actions`·`fields` 를 UTF-8 파일로 두고 `-F 'actions=<a.json;type=application/json;charset=utf-8'` 로 보낸다(인자로 직접 주면 cp949 로 전송된다).
 
 회귀 게이트(운영 서식 전체 × 시나리오)는 `docs/fe-integration/scripts/converter_gate.mjs` 로 워커를 직접 돌린다.
 

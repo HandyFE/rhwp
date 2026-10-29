@@ -1,4 +1,4 @@
-# rhwp converter 2·3단계 구현 결과 (검증 보류)
+# rhwp converter 2·3단계 구현 결과 (Tomcat HTTP 검증 완료, 나머지 보류)
 
 (rhwp converter: rhwp 를 이용한 서버용 문서편집 개발. 계획은 [plan_rhwp_converter_stage2.md](plan_rhwp_converter_stage2.md))
 
@@ -43,21 +43,55 @@ c5 는 W5 수정 **전** 바이너리의 결과다. W5 반영 후 재실행(같�
 회귀 게이트 `converter_gate.mjs` 를 같은 서식 1건 × 시나리오 12종으로 실행: 12 PASS(verify ok, 컨트롤 순서 차이 0, 10~21ms).
 산출물은 `output/pr-review/bms-stage2/`(Git 제외)에 있다 — 한글에서 열어 보는 확인은 아직이다.
 
-## 3. 미검증·보류
+## 3. Tomcat HTTP 검증 (2026-10-29, Windows 개발 PC)
+
+환경: 루트 `tomcat/`(Tomcat 8.5.90, JDK 17, 포트 8480, 워커 2, timeoutMs 20000, 토큰 설정) — 구성은
+`integrations/rhwp-was/local-tomcat/README.md`. 입력 `tonghap_1page`(`output/pr-review/bms-poc/0_original.hwp`), 합성 PNG 120×60.
+산출물 `output/pr-review/bms-stage2/http/`(`c1.out`·`c2b.out` 등, 한글 열기 확인 대상).
+
+| # | 요청 | 결과 |
+|---|---|---|
+| h1 | `GET /health` | 200, `alive 2`, `workerVersion 0.8.7`, `workerApiVersion 2` |
+| h2 | 토큰 없이 `/fields` | 401 |
+| h3 | `/fields option=2` / `option=0 number=1` | 200, 57건 / 56건 `이름{{n}}`, UTF-8 정상 |
+| h4 | `/field-values` `["miskey","서명.2","없는"]` | 200, `서명.2:""`, 없는 필드 `null` |
+| c1 | `/convert` insertSignTextEx+appendSignDateTextEx(서명.2)+insertImage(서명.3, `img0` 파트) | 200, 14,848B, 25ms(워커)/42ms(HTTP). verify ok, 서명.2 셀 `["홍길동","2026/10/29"]`, 서명.3 그림 1. `X-Rhwp-Result` 헤더 Base64 JSON 정상 |
+| c2 | insertText(본문, `` 두 줄) | 422 `누름틀 필드 '본문' 에는 여러 줄 값을 넣을 수 없습니다` — 설계대로(누름틀은 한 줄) |
+| c2b | insertText(본문 한 줄)+appendPicture(서명.1, 15×8mm 상자) | 200, verify ok, 그림 4252×2126 HWPUNIT(비율 유지), 재조회 `본문:"본문 한 줄"` |
+| c3 | 없는 필드 | 422 `필드 이름 '없는필드' 없음` |
+| c4 | `addPageCell` | 422 `지원하지 않는 액션` (BMS 쪽은 Unsupported → 대체 구현체) |
+| c5 | 없는 `imagePart` | 400 `multipart 파트 'nope' 가 없습니다` |
+| c6 | `verify=false` | 200, 결과에 `verify` 없음, 출력 바이트 c1 과 동일 |
+| e1 | `file` 누락 / `actions` 가 배열 아님 | 400 / 400 |
+| f1 | 워커 1개 `taskkill` 후 요청 3건 | 모두 200, `restarts 1`, 로그 `worker-0 가 밖에서 종료됨 — 교체` |
+| f2 | 워커 2개 모두 kill | `/health` 503(`alive 0`, 수정 후) → 다음 요청 200, `restarts +2`, 자동 복구 |
+| f3 | 워커 프로세스 suspend(NtSuspendProcess) 로 응답 지연 | 20.03s 뒤 503 `worker-2 응답 시간 초과 (20000ms) — 강제 종료`, `failures 1`, `lastError` 기록, 워커 교체. 두 번째 요청도 나머지 멈춘 워커로 503, 세 번째부터 200(33ms). 좀비 프로세스 없음 |
+| p1 | 동시 30건(`xargs -P 30`) | 30건 모두 200, `busyRejects 0` |
+| x1 | 출력 결정성 | 같은 요청의 출력 바이트 3회 동일(`cmp`) |
+| x2 | 임시 파일 | 요청 뒤 `rhwp-work/` 비어 있음(입력·그림·출력 모두 삭제) |
+
+검증 중 고친 것: `/health` 의 `alive` 가 풀 슬롯 수(`all.size()`)였고 `requests` 가 워커별 합이라 교체 때 줄어들었다 →
+`alive` 는 `isAlive()` 인 프로세스 수, `pooled` 추가, `requests` 는 풀 누적 카운터(`WorkerPool.stats`).
+따라서 워커가 모두 밖에서 죽으면 다음 요청이 교체할 때까지 `/health` 는 503 이다(요청은 성공한다).
+
+미확인: `queueTimeoutMs` 초과 503(요청이 수십 ms 라 재현 못 함), `allowImageUrl=true` URL 내려받기, Linux.
+
+## 4. 미검증·보류
 
 | 항목 | 상태 |
 |---|---|
 | W5 실물 재확인: 통합서식 8종(`blank1/3`·`fixedrecv`·`3to4`·`5to6`·`audit`·`linked`) `formsweep`·`ctrlorder`, 한글 열기 | 미실행(`1page` 만 확인) |
 | Clippy lib·WASM, `cargo fmt --check`(파일 단위) | 미실행(bin 만 통과) |
-| Tomcat 에 WAR 올려 `/convert`(그림 파트 포함)·`/fields`·`/field-values`·`/health` HTTP 시험 | 미실행 |
+| Tomcat HTTP 시험 | **완료**(§3). `queueTimeoutMs` 503·`allowImageUrl` URL 내려받기만 미확인 |
 | BMS 개발 서버에서 `docconverter.class=RhwpConverterService` 로 기안→결재→접수→반려, 워커 강제 종료·503 시 hwplib 대체, 브레이커 열림/닫힘 | 미실행 |
 | 리눅스 빌드·워커 메모리/시간 실측·운영 WAS 외부 프로세스 허용 | 미실행 |
 | 그림 크기·위치, 셀 비우기 결과, `\r` 문단 나눔, 날짜 글꼴을 한컴 변환기 산출물·한글 화면과 대조 | 정답 산출물 필요(계획 §5) |
 | 운영 서식 전체 회귀 게이트 + 한글 열기 확인 | 운영 서식 필요 |
 | 셀 배경 그림(HsCell `insertbackgroundpicture` 방식 관인) 제거 | 비범위. 필요하면 테두리/배경 채우기 편집 추가 |
 
-## 4. 변경 이력
+## 5. 변경 이력
 
 | 날짜 | 내용 |
 |---|---|
 | 2026-10-29 | W1~W8 구현, 워커 연기 시험, W5 단위 테스트·게이트 1건 실행. W9·전체 검증 보류 |
+| 2026-10-29 | 루트 `tomcat/` 에 WAR 배포, HTTP·장애·동시성 시험(§3). `/health` alive·requests 집계 수정 |

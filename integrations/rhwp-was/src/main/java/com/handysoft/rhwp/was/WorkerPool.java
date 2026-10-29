@@ -7,6 +7,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,6 +33,7 @@ public final class WorkerPool {
     private final AtomicInteger failures = new AtomicInteger();
     private final AtomicInteger waiting = new AtomicInteger();
     private final AtomicInteger busyRejects = new AtomicInteger();
+    private final AtomicLong requests = new AtomicLong();
     private volatile String lastError;
     private volatile long lastErrorAt;
     private volatile String workerVersion = "?";
@@ -110,6 +112,7 @@ public final class WorkerPool {
             }
         }
         try {
+            requests.incrementAndGet();
             JSONObject response = w.call(request, config.timeoutMs);
             if (w.isAlive()) {
                 idle.offer(w);
@@ -158,23 +161,26 @@ public final class WorkerPool {
     }
 
     public JSONObject stats() {
-        int total;
-        long requests = 0;
+        int pooled;
+        int alive = 0;
         synchronized (all) {
-            total = all.size();
+            pooled = all.size();
             for (RhwpWorker w : all) {
-                requests += w.requestCount();
+                if (w.isAlive()) {
+                    alive++;
+                }
             }
         }
         return new JSONObject()
                 .put("configured", config.workers)
-                .put("alive", total)
+                .put("pooled", pooled)
+                .put("alive", alive)
                 .put("idle", idle.size())
                 .put("restarts", restarts.get())
                 .put("failures", failures.get())
                 .put("waiting", waiting.get())
                 .put("busyRejects", busyRejects.get())
-                .put("requests", requests)
+                .put("requests", requests.get())
                 .put("workerVersion", workerVersion)
                 .put("lastError", lastError == null ? JSONObject.NULL : lastError)
                 .put("lastErrorAt", lastErrorAt == 0 ? JSONObject.NULL : new java.util.Date(lastErrorAt).toString());
