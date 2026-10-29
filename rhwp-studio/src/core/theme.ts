@@ -24,8 +24,18 @@ function syncBrowserColorScheme(root: HTMLElement, effective: EffectiveTheme): v
   if (meta) meta.content = scheme;
 }
 
+/**
+ * URL `?theme=light|dark|system` 로 고정한 테마 모드. 호스트가 임베드(`chrome=embed`)할 때
+ * 저장된 사용자 설정·시스템 테마와 무관하게 테마를 고정하는 용도다(기안기는 `theme=light`).
+ * 없거나 값이 잘못되면 `null`. `public/theme-init.js` 의 첫 페인트 적용과 같은 규칙이다.
+ */
+export function getPinnedThemeMode(search: string = window.location.search): ThemeMode | null {
+  const raw = new URLSearchParams(search).get('theme')?.trim().toLowerCase();
+  return raw === 'light' || raw === 'dark' || raw === 'system' ? raw : null;
+}
+
 export function getThemeMode(): ThemeMode {
-  return userSettings.getThemeSettings().mode;
+  return getPinnedThemeMode() ?? userSettings.getThemeSettings().mode;
 }
 
 export function getEffectiveTheme(mode: ThemeMode = getThemeMode()): EffectiveTheme {
@@ -57,7 +67,8 @@ function applyThemeSkin(root: HTMLElement, skin: ThemeSkin = getThemeSkin()): vo
 
 export function setThemeMode(mode: ThemeMode): EffectiveTheme {
   userSettings.setThemeMode(mode);
-  return applyTheme(mode);
+  // URL 로 고정된 모드가 있으면 설정은 저장하되 화면은 고정값을 유지한다.
+  return applyTheme(getPinnedThemeMode() ?? mode);
 }
 
 export function setThemeSkin(skin: ThemeSkin): EffectiveTheme {

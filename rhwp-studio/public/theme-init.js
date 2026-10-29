@@ -9,6 +9,15 @@
   const isThemeMode = (value) => value === 'system' || value === 'light' || value === 'dark';
   let mode = 'system';
   let skin = 'default';
+  // URL `?theme=light|dark|system` 은 저장된 설정보다 우선한다 — 호스트(기안기 임베드 등)가
+  // 테마를 고정할 때 쓴다. src/core/theme.ts 의 getThemeMode 도 같은 규칙을 따른다.
+  let pinnedMode = null;
+  try {
+    const urlMode = new URLSearchParams(window.location.search).get('theme');
+    if (urlMode && isThemeMode(urlMode.trim().toLowerCase())) pinnedMode = urlMode.trim().toLowerCase();
+  } catch {
+    pinnedMode = null;
+  }
   try {
     const settings = JSON.parse(localStorage.getItem('rhwp-settings') || '{}');
     const storedMode = settings && settings.theme && settings.theme.mode;
@@ -19,6 +28,7 @@
   } catch {
     mode = 'system';
   }
+  if (pinnedMode) mode = pinnedMode;
   if (skin !== 'default') root.dataset.themeSkin = skin;
   const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   const effective = mode === 'dark' || (mode === 'system' && prefersDark) ? 'dark' : 'light';
