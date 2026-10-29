@@ -56,7 +56,8 @@ c5 는 W5 수정 **전** 바이너리의 결과다. W5 반영 후 재실행(같�
 | h3 | `/fields option=2` / `option=0 number=1` | 200, 57건 / 56건 `이름{{n}}`, UTF-8 정상 |
 | h4 | `/field-values` `["miskey","서명.2","없는"]` | 200, `서명.2:""`, 없는 필드 `null` |
 | c1 | `/convert` insertSignTextEx+appendSignDateTextEx(서명.2)+insertImage(서명.3, `img0` 파트) | 200, 14,848B, 25ms(워커)/42ms(HTTP). verify ok, 서명.2 셀 `["홍길동","2026/10/29"]`, 서명.3 그림 1. `X-Rhwp-Result` 헤더 Base64 JSON 정상 |
-| c2 | insertText(본문, `` 두 줄) | 422 `누름틀 필드 '본문' 에는 여러 줄 값을 넣을 수 없습니다` — 설계대로(누름틀은 한 줄) |
+| c2 | insertText(본문, `
+` 두 줄) | 422 `누름틀 필드 '본문' 에는 여러 줄 값을 넣을 수 없습니다` — 설계대로(누름틀은 한 줄) |
 | c2b | insertText(본문 한 줄)+appendPicture(서명.1, 15×8mm 상자) | 200, verify ok, 그림 4252×2126 HWPUNIT(비율 유지), 재조회 `본문:"본문 한 줄"` |
 | c3 | 없는 필드 | 422 `필드 이름 '없는필드' 없음` |
 | c4 | `addPageCell` | 422 `지원하지 않는 액션` (BMS 쪽은 Unsupported → 대체 구현체) |
@@ -76,13 +77,57 @@ c5 는 W5 수정 **전** 바이너리의 결과다. W5 반영 후 재실행(같�
 
 미확인: `queueTimeoutMs` 초과 503(요청이 수십 ms 라 재현 못 함), `allowImageUrl=true` URL 내려받기, Linux.
 
+## 3b. BMS 샌드박스 실문서 게이트 (2026-10-29)
+
+자료: `C:\Handyground\Server_tmpe.handysoft.co.kr\hoffice\sancbox` (테스트 서버 사본). `…002` 가 hox(XML, `docInfo > formInfo` 로 서식·
+`approvalStatus` 로 진행/완료), `…001` 이 본문. 선별은 `scripts/pick_sandbox_docs.py`(색인 `output/pr-review/bms-stage2/forms-sandbox/sandbox_index.tsv`).
+
+| 본문 종류 | 건수 | 비고 |
+|---|---|---|
+| hox 전체 | 109 | 진행 77 · 완료 29 · 반려 3. 서식 30여 종 |
+| 웹한글(`hwpweb`) HWP | 69 | 모두 1~3쪽. 서명 셀 값은 `MM/DD
+이름`(테스트 서버 변환기 산출) |
+| 웹한글 HWPX | 1 | 웹한글도 HWPX 로 저장하는 경우가 있다 |
+| 데스크톱 한글(`hwp2002`) | 18 | **HC20 압축 + 429B "Handysoft Approval Document File" 헤더** 포장(BMS `WrtUtil.uncompressFromHC20File`·`OLD_HEADER_LEN`). 벗기면 **HWPX 13 · HWP 5**. 해제 도구 `scripts/Hc20Decode.java` |
+| HTML 본문 등 | 21 | 대상 아님 |
+
+게이트 결과(12 시나리오, 산출물 `gate-sandbox/`·`gate-sandbox-hwp2002/`):
+
+| 묶음 | PASS | WARN(ctrlorder 차이) | FAIL | SKIP |
+|---|---|---|---|---|
+| 웹한글 HWP 69 + HWPX 1 | 785 | 23 | 13 | 19 |
+| 데스크톱 한글 18 (HWPX 13·HWP 5) | 52 | 153 | 1 | 10 |
+
+WARN 153 중 144 는 HWPX 라 `ctrlorder.py`(HWP5 전용)가 비교하지 못해 `?` 로 남은 것이고, 나머지 9 는 아래 결함 4·5 다.
+
+결함 4 수정 뒤 재실행(`gate-sandbox-fix4/`, 웹한글 70건): **PASS 795 · WARN 13 · FAIL 13 · SKIP 19**. 결함 4 의 WARN 10 은 사라졌고
+(`2304` ctrlorder 차이 0, 끝 문단 `cc=10` 유지), 남은 WARN 13 = HWPX 11(비교 불가) + 2(`2305`·`2369` `body_fill`: 본문이 셀 필드라
+셀 비우기가 셀 안 단 정의 컨트롤까지 지웠다 — `insertTextEx` 의 정의대로, 결함 아님). FAIL 13 = 중첩 표 10 + 결함 3 1 + 입력 결함 1 + HWPX 결함 6 1.
+
+### 실문서로 찾은 결함 (모두 rhwp-FE 엔진)
+
+| # | 증상 | 재현 문서 | 원인·상태 |
+|---|---|---|---|
+| 결함 3 | `[secd][cold]␣␣[tbl]␣[tbl]␣×10[%clk]값[clk][tbl]` 처럼 **글자 사이에 표가 있는 문단**에 `insertText(본문)` 하면 표가 글자 뒤로 밀리고 값이 누름틀 밖에 저장된다(재적재 값 ""). verify 가 잡아 strict 모드면 실패 → BMS 대체 경로 | `JHOMS262960012564`(웹한글, 진행 중) | `rebuild_char_offsets` 가 "앞 컨트롤 수 + 글자" 모델이라 글자 중간 컨트롤 위치를 버린다. **미수정** — 각 컨트롤의 글자 위치를 원본 `char_offsets` 에서 보존하도록 재작성 필요 |
+| 결함 4 | **여러 문단에 걸친 본문 누름틀**(웹한글에서 Enter 로 문단을 나눈 본문)이 있는 문서를 저장하면 — 서명 셀만 고쳐도 — 끝 문단의 FIELD_END 가 사라진다. verify 는 못 잡고(값 조회가 `None`) ctrlorder 만 잡았다 | `JHOMS262810012304`·`2368`(국체진 감사), `2305`·`2369`(일상감사검토서) | 파서 `link_orphan_field_ends_with` 가 `field_id != 0` 인 필드만 열린 필드로 쌓아, 웹한글 `%clk`(인스턴스 id 0)의 종료 마커가 `begin_ctrl_id 0` 으로 남고 HWP5 저장기가 버렸다. **수정**(조건에 `ctrl_id != 0` 추가, 단위 테스트 `orphan_field_end_links_to_an_open_field_without_instance_id`). 값 조회가 여러 문단 필드를 `None` 으로 주는 것은 별도 보완 필요(verify 사각) |
+| 결함 5 | 데스크톱 한글이 저장한 3쪽 HWP 를 저장하면 컨트롤 순서 10곳이 바뀐다(표 안 문단과 본문 문단의 레코드 레벨이 뒤바뀐 듯) | `JHOMS262750012205`(`[한글] 통합서식2`) | **미분석**. 한컴 저장본 특유 구조. 재현 파일 `forms-sandbox-hwp2002/` |
+| 결함 6 | **HWPX** 에 `insertText(본문)` 하면 값이 누름틀 밖(앞 공백 포함)에 들어가거나 비어 있다 | `JHOMS262750012209`(웹한글 HWPX), `JHOMS262870012385`(데스크톱 HWPX) | HWPX 직렬화 경로의 필드 위치 계산. **미수정**. HWPX 용 구조 비교 도구(ctrlorder 상당)도 없다 |
+| 범위 밖 | 셀 필드가 **2단계 중첩 표**(표 안의 표) 안에 있는 서식은 모든 셀 액션이 "깊이 1 표 셀이 아닙니다" 로 422 | `JHOMS262990012585`(통합서식 5~6인용, 한기대) | 컨버터 `FieldSlot` 가 깊이 1 만 지원. 운영 서식에 있으므로 **깊이 N 지원 필요** |
+| 입력 결함 | 문단 0 이 이미 깨진 문서(rhwp 에디터 저장본) | `JHOMS263020012665` | 편집기 쪽(E3). verify 가 거부 |
+
+그 밖에 확인된 것: 완료 문서의 서명 셀 값은 `07/06
+윤진환` 처럼 **날짜 줄이 위, 이름이 아래**(MM/DD)다. 데스크톱 한글 문서의 서명 셀은 `09/21
+` 뒤가 비어
+있어 이름이 그림(서명 이미지)일 가능성이 있다(확인 필요). 관인 필드에 값이 든 문서는 없었다. 처리 시간은 모두 50ms 이하.
+
 ## 4. 미검증·보류
 
 | 항목 | 상태 |
 |---|---|
-| W5 실물 재확인: 통합서식 8종(`blank1/3`·`fixedrecv`·`3to4`·`5to6`·`audit`·`linked`) `formsweep`·`ctrlorder`, 한글 열기 | 미실행(`1page` 만 확인) |
+| W5 실물 재확인: 담당자 제공 웹한글 서식 7종(기안·보고·발수신 4종·통합 blank, `D:e_workseTempSpace`, 사본 `output/pr-review/bms-stage2/forms-user/`) 게이트 12 시나리오 | **PASS 75 / SKIP 9 / FAIL 0**(2026-10-29, `gate-user/`). SKIP 은 관인·본문 필드가 없는 서식. 모두 1쪽 빈 서식이라 결재 진행 중 실문서·다쪽·관인 서식은 미확인. 한글 열기는 담당자 |
 | Clippy lib·WASM, `cargo fmt --check`(파일 단위) | 미실행(bin 만 통과) |
 | Tomcat HTTP 시험 | **완료**(§3). `queueTimeoutMs` 503·`allowImageUrl` URL 내려받기만 미확인 |
+| 실문서(결재 진행 중·완료) 게이트 | **실행**(§3b): 웹한글 70 + 데스크톱 18. 결함 3~6 과 중첩 표 범위 확인. 결함 4 수정, 나머지 미수정 |
 | BMS 개발 서버에서 `docconverter.class=RhwpConverterService` 로 기안→결재→접수→반려, 워커 강제 종료·503 시 hwplib 대체, 브레이커 열림/닫힘 | 미실행 |
 | 리눅스 빌드·워커 메모리/시간 실측·운영 WAS 외부 프로세스 허용 | 미실행 |
 | 그림 크기·위치, 셀 비우기 결과, `\r` 문단 나눔, 날짜 글꼴을 한컴 변환기 산출물·한글 화면과 대조 | 정답 산출물 필요(계획 §5) |
@@ -95,3 +140,6 @@ c5 는 W5 수정 **전** 바이너리의 결과다. W5 반영 후 재실행(같�
 |---|---|
 | 2026-10-29 | W1~W8 구현, 워커 연기 시험, W5 단위 테스트·게이트 1건 실행. W9·전체 검증 보류 |
 | 2026-10-29 | 루트 `tomcat/` 에 WAR 배포, HTTP·장애·동시성 시험(§3). `/health` alive·requests 집계 수정 |
+| 2026-10-29 | 담당자 제공 웹한글 서식 7종 게이트 PASS 75/SKIP 9/FAIL 0 (§4 W5) |
+| 2026-10-29 | 샌드박스 실문서 88건 게이트(§3b). 결함 3~6·중첩 표 범위 발견, 결함 4(여러 문단 누름틀 FIELD_END 소실) 파서 수정. `pick_sandbox_docs.py`·`Hc20Decode.java` 추가 |
+| 2026-10-29 | BMS 샌드박스(`C:\Handyground\Server_tmpe.handysoft.co.kr\hoffice\sancbox`) 실문서 선별 스크립트 `scripts/pick_sandbox_docs.py` 추가. 로컬 사본에는 hox 4건·HWP 본문 1건(rhwp 에디터로 기안한 통합서식, 진행 중)뿐. 그 1건 게이트 11 PASS / 1 FAIL(`body_fill`) — 원인은 입력 문서의 문단 0 이 이미 깨져 있음(rhwp 에디터 저장: `여기가 본문1…[secd]본문이 여기2을 입력하세요.[cold][tbl][%clk][clk][tbl]`, 누름틀이 비어 있고 글자가 secd 앞·cold 앞에 있음). 컨버터는 그 위에 값을 secd 뒤에 넣었고 verify 가 잡아 strict 모드면 실패 → BMS 대체 경로. 편집기 쪽 기록은 `FeWebClient_rhwp/doc/plan/rhwp editor.md` E3 |

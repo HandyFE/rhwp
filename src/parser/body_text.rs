@@ -187,7 +187,12 @@ fn link_orphan_field_ends_with(paragraphs: &mut [Paragraph], open_fields: &mut V
                 continue;
             };
             let closed_here = para.field_ranges.iter().any(|fr| fr.control_idx == i);
-            if !closed_here && field.field_id != 0 {
+            // `field_id`(인스턴스 id)가 0 인 누름틀도 연다 — 웹한글이 만든 `%clk` 는 CTRL_DATA 에
+            // id 가 없어 0 으로 읽히는데, 종전에는 이 조건 때문에 스택에 오르지 못해 뒤 문단의
+            // 종료 마커가 `begin_ctrl_id == 0` 으로 남았고 HWP5 저장기가 그 마커를 버렸다
+            // (BMS 샌드박스 국체진 감사 서식: 여러 문단 본문의 FIELD_END 소실, rhwp converter 결함 4).
+            // HWP5 에서는 `ctrl_id` 가 종류를 말하므로 짝을 잇는 데 인스턴스 id 가 필요 없다.
+            if !closed_here && (field.field_id != 0 || field.ctrl_id != 0) {
                 open_fields.push((field.field_id, field.ctrl_id));
             }
         }

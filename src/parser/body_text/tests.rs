@@ -1020,6 +1020,48 @@ fn orphan_field_end_links_to_the_open_field_id() {
     assert_eq!(paras[1].orphan_field_ends[0].begin_id_ref, 2031845287);
 }
 
+/// 인스턴스 id(`field_id`)가 0 인 누름틀도 열린 필드로 쌓여야 한다.
+///
+/// 웹한글이 만든 `%clk` 는 CTRL_DATA 에 id 가 없어 0 으로 읽힌다. 종전에는 그런 필드를
+/// 건너뛰어 뒤 문단의 종료 마커가 `begin_ctrl_id == 0` 으로 남았고, HWP5 저장기는 종류를
+/// 모르는 마커를 내지 않으므로 여러 문단 본문의 FIELD_END 가 저장 때 사라졌다
+/// (BMS 샌드박스 국체진 감사 서식, rhwp converter 결함 4).
+#[test]
+fn orphan_field_end_links_to_an_open_field_without_instance_id() {
+    use crate::model::control::{Field, FieldType};
+    use crate::model::paragraph::OrphanFieldEnd;
+
+    let mut opener = Paragraph {
+        text: "ㅁ".to_string(),
+        ..Default::default()
+    };
+    opener.controls.push(Control::Field(Field {
+        field_type: FieldType::ClickHere,
+        field_id: 0,
+        ctrl_id: tags::FIELD_CLICKHERE,
+        ..Default::default()
+    }));
+
+    let closer = Paragraph {
+        text: "ㄹ".to_string(),
+        orphan_field_ends: vec![OrphanFieldEnd {
+            char_idx: 1,
+            begin_id_ref: 0,
+            field_id: 0,
+            begin_ctrl_id: 0,
+        }],
+        ..Default::default()
+    };
+
+    let mut paras = vec![opener, closer];
+    link_orphan_field_ends(&mut paras);
+    assert_eq!(
+        paras[1].orphan_field_ends[0].begin_ctrl_id,
+        tags::FIELD_CLICKHERE,
+        "짝 필드의 ctrl_id 로 이어져 HWP5 저장기가 종료 마커를 낸다"
+    );
+}
+
 /// 같은 문단에서 닫힌 필드는 열린 채로 쌓지 않는다 — 뒤 문단의 마커가 엉뚱한 필드를
 /// 가리키면 안 된다.
 #[test]
