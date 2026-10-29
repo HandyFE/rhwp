@@ -32,6 +32,21 @@ function callOn(ctrl, method, args) {
   return fn.apply(ctrl, args || []);
 }
 
+/**
+ * 문서를 **통째로 교체**하는 호출. 교체는 `adoptDocument` 로 studio 열기 경로에 위임되므로
+ * 편집 트랜잭션이 아니다 — 트랜잭션으로 감싸면 문서가 아직 없을 때(첫 Open) 거절된다.
+ */
+const DOCUMENT_REPLACING_METHODS = new Set(['Open', 'OpenDocument', 'Clear']);
+
+/** 프로토타입 체인에서 이름의 종류를 찾는다. 메서드인지 속성(getter/setter)인지 호스트가 알아야 한다. */
+function memberKind(ctrl, name) {
+  for (let proto = ctrl; proto; proto = Object.getPrototypeOf(proto)) {
+    const desc = Object.getOwnPropertyDescriptor(proto, name);
+    if (desc) return typeof desc.value === 'function' ? 'method' : 'prop';
+  }
+  return null;
+}
+
 export const hwpctrlStudioPlugin = {
   id: PLUGIN_ID,
   apiVersion: 1,
@@ -57,6 +72,7 @@ export const hwpctrlStudioPlugin = {
       // undo 스택과 두 갈래가 된다.
       if (method === 'Undo') return host.automation.execute('edit:undo');
       if (method === 'Redo') return host.automation.execute('edit:redo');
+      if (DOCUMENT_REPLACING_METHODS.has(method)) return callOn(ctrl, method, args);
       if (!isMutating(method)) return host.read(() => callOn(ctrl, method, args));
       return host.transaction(`hwpctrl:${method}`, (tx) => {
         tx.deferPagination();
@@ -82,6 +98,15 @@ export const hwpctrlStudioPlugin = {
     return {
       invoke: (method, args) => invoke(method, args),
       batch: (ops) => batch(ops),
+
+      // ── 속성 접근 — 웹한글 API 는 `EditMode`·`ViewProperties` 같은 속성을 쓴다 ────────
+      // 같은 창(iframe 같은 출처) 호스트가 HwpCtrl 객체 모양을 그대로 흉내 낼 때 쓴다.
+      memberKind: (name) => memberKind(ctrl, name),
+      getProp: (name) => ctrl[name],
+      setProp: (name, value) => {
+        ctrl[name] = value;
+        return true;
+      },
 
       /** 현재 문서를 바이트로. 저장은 호스트(브리지)가 받아 내려받기를 처리한다. */
       exportBytes: (format) => host.read((doc) => {

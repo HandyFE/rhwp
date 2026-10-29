@@ -10,6 +10,7 @@
     "subsecond:sync": "mkdir -p ../target/rhwp-subsecond-vite && cp ../target/dx/rhwp-subsecond/debug/web/public/wasm/rhwp-subsecond.js ../target/dx/rhwp-subsecond/debug/web/public/wasm/rhwp-subsecond_bg.wasm ../target/rhwp-subsecond-vite/",
     "dev:subsecond": "npm run subsecond:sync && RHWP_SUBSECOND=1 vite",
     "build": "tsc && vite build",
+    "build:fe-embed": "RHWP_DISABLE_PWA=1 vite build --base ./ --outDir ../output/fe-embed/rhwp-studio --emptyOutDir",
     "build:no-hwpctrl": "RHWP_WITHOUT_HWPCTRL=1 tsc && RHWP_WITHOUT_HWPCTRL=1 vite build",
     "dev:no-hwpctrl": "RHWP_WITHOUT_HWPCTRL=1 vite",
     "preview": "vite preview",

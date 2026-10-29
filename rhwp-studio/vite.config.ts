@@ -110,6 +110,8 @@ export default defineConfig({
       },
     },
     VitePWA({
+      // 다른 앱(iframe)에 얹는 빌드는 그 서버 경로에 서비스 워커를 남기지 않는다(`build:fe-embed`).
+      disable: process.env.RHWP_DISABLE_PWA === '1',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'icons/*.png'],
       manifest: {
