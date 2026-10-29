@@ -63,7 +63,7 @@ yarn run deploy-fe dev
 | 브리지 동작 (로컬 시험 페이지) | 확인 | studio iframe → 플러그인 로드 → `Open`(통합서식 1page) → `GetFieldList`·`PutFieldText`·`GetFieldText`·`PageCount` → `EditMode` 읽기·쓰기. 제목·본문 값이 화면에 그려짐 |
 | 미지원 API 통과 | 확인 | `SetToolBar`, `ScrollPosInfo.Item()`: 경고만 남고 예외 없음 |
 | 기안기 빌드 | 확인 | webpack 빌드 성공, eslint·prettier 통과, 새 순환 의존 없음 |
-| 기안기 실제 화면 (BMS 개발 서버) | 로딩 완료 (2026-10-29) | 기안(DRAFT) 로딩까지 확인. 도중에 멈춘 4곳은 FE 브리지에서 임시 처리. 로딩 이후 편집·저장·상신은 미확인 |
+| 기안기 실제 화면 (BMS 개발 서버) | 로딩·기안 성공 (2026-10-29) | 기안기 로딩과 결재올림까지 확인했다. 도중에 멈춘 곳은 FE 브리지·`FeRhwpEditor` 에서 임시 처리했다. 저장은 `exportBytes` → Blob URL → BMS 업로드로 했다. 상신 본문을 한글로 열어 본 정합성(저장 결함 1·2)과 서명 이미지 표시는 미확인 |
 
 POC에서 드러난 문제·개선 목록은 FeWebClient_rhwp `doc/plan/rhwp 에디터.md`에 기록한다(`poc/rhwp-editor` 브랜치).
 주요 원인은 호환 층(COM 규격)과 웹한글 JS API의 차이다.
