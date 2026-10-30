@@ -1,6 +1,6 @@
 # rhwp converter 2·3단계 구현 결과 (Tomcat HTTP 검증 완료, 나머지 보류)
 
-(rhwp converter: rhwp 를 이용한 서버용 문서편집 개발. 계획은 [plan_rhwp_converter_stage2.md](plan_rhwp_converter_stage2.md))
+(rhwp converter: rhwp 를 이용한 서버용 문서편집 개발. 계획은 [plan_rhwp_converter_stage2.md](../../../docs/plan_rhwp_converter_stage2.md))
 
 - 일자: 2026-10-29
 - 기준: 계획 커밋 `84ffdca16` 위에 구현. 담당자 지시로 **검증은 나중에 몰아서** 하기로 했다. 이 문서의 "확인" 은

@@ -23,15 +23,17 @@ rhwp-FE는 원작 rhwp(v0.8.7, `1a76570e8`)를 바탕으로 **핸디 전자결�
 
 ## 문서
 
+저장소를 가로지르는 문서(보고서·계획·결정)는 루트 [`../../../docs/`](../../../docs/README.md) 에 있다. 여기에는 rhwp-FE 코드·검증 결과에 붙는 문서만 둔다.
+
 | 문서 | 내용 |
 |---|---|
-| [poc_interim_report.md](poc_interim_report.md) | **두 POC(rhwp editor·rhwp converter) 중간 결과 보고** — rhwp 설명, 결과, 제품 포함 판정, 다음 단계(2026-10-29). 최종 보고·발표 자료의 바탕 |
+| [../../../docs/poc_interim_report.md](../../../docs/poc_interim_report.md) | (루트 `docs/` 로 이동, 2026-10-30) 두 POC 중간 결과 보고 |
 | [stage1_verification.md](stage1_verification.md) | 1단계: FE 서식을 rhwp로 열기·필드 채우기·셀 그림 삽입·저장 검증, 한글 확인 결과와 저장 결함 1 원인 |
 | [stage2_api_scope.md](stage2_api_scope.md) | 2단계: 기안기(웹한글 `hwpCtrl`) 대체에 필요한 API 우선순위와 견적(61~91인일) |
 | [stage3_reliability_and_server.md](stage3_reliability_and_server.md) | 3단계: 제품 적용 신뢰성 평가, 저장 결함 2 발견, BMS 서버 운영 방식 비교와 결정 |
 | [poc_rhwp_editor.md](poc_rhwp_editor.md) | **rhwp editor** POC: 기안기용 에디터(웹한글 대체). 구조, 빌드·켜기, 확인 결과 |
 | [poc_rhwp_converter.md](poc_rhwp_converter.md) | **rhwp converter** POC 1단계: 서버용 문서편집(BMS). `rhwp worker` + `rhwp.war` 로 `서명.2` 글자 서명, 장애 시험 결과 |
-| [plan_rhwp_converter_stage2.md](plan_rhwp_converter_stage2.md) | **rhwp converter** 2·3단계 계획: BMS `DocConverter` 계약 대비 공백, 작업 항목 W1~W9 와 견적, 착수 전 요청 자료 |
+| [../../../docs/plan_rhwp_converter_stage2.md](../../../docs/plan_rhwp_converter_stage2.md) | (루트 `docs/` 로 이동, 2026-10-30) **rhwp converter** 2·3단계 계획 |
 | [rhwp_converter_stage2.md](rhwp_converter_stage2.md) | **rhwp converter** 2·3단계 구현 결과: W1~W8 구현, 워커 연기 시험, 미검증 목록 |
 | [scripts/](scripts/README.md) | 검증에 쓴 스크립트 |
 
@@ -64,7 +66,7 @@ rhwp-FE는 원작 rhwp(v0.8.7, `1a76570e8`)를 바탕으로 **핸디 전자결�
 1. 착수 전 확인: BMS 처리량, 서버 OS·배포 방식, 실패 시 대체 경로, 운영 서식 목록
 2. 저장 결함 1·2 수정
 3. 버전 고정 + 운영 서식 전체 회귀 게이트(`scripts/formsweep.mjs` 정식화, 한글 열기 확인 포함)
-4. rhwp converter 2·3단계([계획](plan_rhwp_converter_stage2.md)) — W1~W8 구현 완료([결과](rhwp_converter_stage2.md)), 검증(Tomcat·BMS·리눅스·한글 대조·회귀 게이트) 보류
+4. rhwp converter 2·3단계([계획](../../../docs/plan_rhwp_converter_stage2.md)) — W1~W8 구현 완료([결과](rhwp_converter_stage2.md)), 검증(Tomcat·BMS·리눅스·한글 대조·회귀 게이트) 보류
 5. 기안기 대체는 2단계 견적을 바탕으로 범위 조정 후 결정
 
 ## 증적
