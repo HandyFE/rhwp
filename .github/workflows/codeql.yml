@@ -16,8 +16,8 @@ on:
       - '.github/pull_request_template.md'
       - '.github/dependabot.yml'
       - 'rhwp-logo.*'
-  schedule:
-    - cron: '0 6 * * 1'  # 매주 월요일 06:00 UTC
+  # [HandyFE 포크] 원작의 주간 schedule(월 06:00 UTC) 실행은 끈다. 포크에는 코드 스캐닝이 없어
+  # 세 언어 Analyze 가 매주 실패 메일만 보낸다. 필요하면 workflow_dispatch 로 수동 실행한다.
   workflow_dispatch:
 
 # [Task #1192 F] 같은 PR 에 새 push 가 오면 진행 중 run 을 취소해 중복 실행 제거.
