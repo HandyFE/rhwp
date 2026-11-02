@@ -35,9 +35,7 @@ name: Cache Generation Sweep
 #   못 믿는 상태에서 삭제하면 전량 삭제가 되기 때문이다(fail-closed).
 
 on:
-  schedule:
-    # 매일 1회. devel push 마다 돌 필요가 없다 — 세대는 Cargo.lock 변경 시에만 는다.
-    - cron: "23 18 * * *"
+  # [HandyFE 포크] 원작의 nightly schedule 은 끈다. 포크에서는 Actions 사용량·실패 메일만 늘린다.
   workflow_dispatch:
     inputs:
       dry_run:

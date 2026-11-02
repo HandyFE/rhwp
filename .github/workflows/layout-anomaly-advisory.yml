@@ -17,9 +17,7 @@
 name: Layout Anomaly Advisory
 
 on:
-  schedule:
-    # fuzz-smoke 02:41, cache-generation-sweep 18:23 과 시각을 겹치지 않게 한다.
-    - cron: "17 3 * * *"
+  # [HandyFE 포크] 원작의 nightly schedule 은 끈다. 포크에서는 Actions 사용량·실패 메일만 늘린다.
   workflow_dispatch:
     inputs:
       limit:

@@ -1,22 +1,8 @@
 name: Deploy to GitHub Pages
 
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - 'mydocs/**'
-      - 'samples/**'
-      - 'pdf/**'
-      - 'assets/**'
-      - '*.md'
-      - 'LICENSE'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/FUNDING.yml'
-      - '.github/CODE_OF_CONDUCT.md'
-      - '.github/SECURITY.md'
-      - '.github/pull_request_template.md'
-      - '.github/dependabot.yml'
-      - 'rhwp-logo.*'
+  # [HandyFE 포크] main push 자동 배포는 끈다. 포크에는 GitHub Pages 가 없어 Deploy 가 실패한다.
+  # 필요하면 workflow_dispatch 로 수동 실행한다.
   workflow_dispatch:
 
 permissions:

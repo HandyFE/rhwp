@@ -9,9 +9,7 @@ name: Fuzz smoke
 # DoS 수정은 M03-3 이후. OSS-Fuzz 등재는 M10. 왕복 정합성은 M04.
 
 on:
-  schedule:
-    # 다른 nightly(cache-generation-sweep 18:23, CodeQL 월 06:00)와 시각을 겹치지 않게 한다.
-    - cron: "41 2 * * *"
+  # [HandyFE 포크] 원작의 nightly schedule 은 끈다. 포크에서는 Actions 사용량·실패 메일만 늘린다.
   workflow_dispatch:
     inputs:
       max_total_time:
